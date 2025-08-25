@@ -40,4 +40,25 @@ trait CommonTrait
         ]);
     }
 
+    public function generateAgentCode(){
+        $prefix = 'AGT';
+        $year = date('Y');
+
+        // Get the last agent code for this year
+        $lastAgent = DB::table('agents')
+            ->where('AgentCode', 'like', $prefix . $year . '%')
+            ->orderBy('AgentCode', 'desc')
+            ->first();
+
+        if ($lastAgent) {
+            // Extract the number part and increment
+            $lastNumber = intval(substr($lastAgent->AgentCode, -4));
+            $newNumber = $lastNumber + 1;
+        } else {
+            $newNumber = 1;
+        }
+
+        // Format: AGT2024-0001
+        return $prefix . $year . '-' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+    }
 }

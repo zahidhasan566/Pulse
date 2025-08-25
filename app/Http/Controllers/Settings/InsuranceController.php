@@ -1,0 +1,173 @@
+<?php
+
+namespace App\Http\Controllers\Settings;
+
+use App\Http\Controllers\Controller;
+use App\Models\Partner;
+use App\Models\Settings\Insurance;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
+
+class InsuranceController extends Controller
+{
+    /**
+     * Display a listing of partners
+     */
+    public function index(Request $request)
+    {
+        $query = Insurance::query();
+
+        // Search functionality
+        if ($request->has('search') && !empty($request->search)) {
+            $query->where('InsuranceName', 'like', '%' . $request->search . '%')
+                ->orWhere('InsuranceDetails', 'like', '%' . $request->search . '%');
+        }
+
+        $insurances = $query->select('InsuranceID','InsuranceName','InsuranceDetails','InsuranceLogo')->orderBy('InsuranceID', 'desc')->paginate(10);
+
+        return response()->json($insurances);
+    }
+
+    /**
+     * Store a newly created partner
+     */
+    public function store(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'InsuranceName' => 'required|string|max:255',
+            'InsuranceDetails' => 'nullable|string',
+            'InsuranceLogo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $insurance = new Insurance();
+        $insurance->InsuranceName = $request->InsuranceName;
+        $insurance->InsuranceDetails = $request->InsuranceDetails;
+
+        // Handle logo upload
+        if ($request->hasFile('Insurance')) {
+            $logoPath = $request->file('InsuranceLogo')->store('partner-logos', 'public');
+            $insurance->InsuranceLogo = $logoPath;
+        }
+
+        $insurance->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Insurance created successfully',
+            'data' => $insurance
+        ], 201);
+    }
+
+    /**
+     * Display the specified partner
+     */
+    public function show($id)
+    {
+        $insurance = Insurance::find($id);
+
+        if (!$insurance) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Insurance not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $insurance
+        ]);
+    }
+
+    /**
+     * Update the specified partner
+     */
+    public function update(Request $request)
+    {
+        $insurance = Insurance::find($request->InsuranceID);
+
+        if (!$insurance) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Insurance not found'
+            ], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'InsuranceName' => 'required|string|max:255',
+            'InsuranceDetails' => 'nullable|string',
+            'InsuranceLogo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $insurance->InsuranceName = $request->InsuranceName;
+        $insurance->InsuranceDetails = $request->InsuranceDetails;
+
+        // Handle logo upload
+        if ($request->hasFile('InsuranceLogo')) {
+            // Delete old logo if exists
+            if ($insurance->InsuranceLogo) {
+                Storage::disk('public')->delete($insurance->InsuranceLogo);
+            }
+
+            $logoPath = $request->file('InsuranceLogo')->store('insurance-logos', 'public');
+            $insurance->InsuranceLogo = $logoPath;
+        }
+
+        $insurance->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Insurance updated successfully',
+            'data' => $insurance
+        ]);
+    }
+
+    /**
+     * Remove the specified partner (Admin only)
+     */
+    public function destroy($id)
+    {
+        // Check if user is admin
+        if (auth()->user()->RoleID !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized. Admin access required.'
+            ], 403);
+        }
+
+        $insurance = Insurance::find($id);
+
+        if (!$insurance) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Insurance not found'
+            ], 404);
+        }
+
+        // Delete logo file if exists
+        if ($insurance->InsuranceLogo) {
+            Storage::disk('public')->delete($insurance->InsuranceLogo);
+        }
+
+        $insurance->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Insurance deleted successfully'
+        ]);
+    }
+}

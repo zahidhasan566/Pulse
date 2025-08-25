@@ -1,0 +1,15 @@
+<?php
+
+namespace App\Models\Settings;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Agents extends Model
+{
+    use HasFactory;
+    protected $table = "Agents";
+    public $primaryKey = 'PackageID';
+    protected $guarded = [];
+    public $timestamps = false;
+}

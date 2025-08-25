@@ -1,0 +1,314 @@
+<template>
+    <div>
+        <div class="modal fade" id="add-edit-partner" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="modal-title modal-title-font" id="exampleModalLabel">{{ title }}</div>
+                    </div>
+
+                    <ValidationObserver v-slot="{ handleSubmit }">
+                        <form class="form-horizontal" id="form" @submit.prevent="handleSubmit(onSubmit)">
+                            <div class="modal-body">
+                                <div class="row">
+
+                                    <!-- Partner Name -->
+                                    <div class="col-12 col-md-6">
+                                        <ValidationProvider name="Partner Name" mode="eager" rules="required" v-slot="{ errors }">
+                                            <div class="form-group">
+                                                <label for="partnerName">Partner Name <span class="error">*</span></label>
+                                                <input
+                                                    type="text"
+                                                    class="form-control"
+                                                    :class="{'error-border': errors[0]}"
+                                                    id="partnerName"
+                                                    v-model="PartnerName"
+                                                    name="partner-name"
+                                                    placeholder="Partner Name"
+                                                    autocomplete="off"
+                                                >
+                                                <span class="error-message">{{ errors[0] }}</span>
+                                            </div>
+                                        </ValidationProvider>
+                                    </div>
+
+
+
+                                    <!-- Partner Logo -->
+                                    <div class="col-12 col-md-6">
+                                        <ValidationProvider name="Partner Logo" mode="eager" rules="" v-slot="{ errors }">
+                                            <div class="form-group">
+                                                <label for="partnerLogo">Partner Logo</label>
+                                                <input
+                                                    type="file"
+                                                    class="form-control-file"
+                                                    :class="{'error-border': errors[0]}"
+                                                    id="partnerLogo"
+                                                    @change="handleLogoUpload"
+                                                    accept="image/*"
+                                                    ref="logoInput"
+                                                >
+                                                <small class="form-text text-muted">Accepted formats: JPG, PNG, GIF. Max size: 2MB</small>
+                                                <span class="error-message">{{ errors[0] }}</span>
+                                            </div>
+                                        </ValidationProvider>
+                                    </div>
+
+                                    <!-- Current Logo Preview -->
+                                    <div class="col-12" v-if="currentLogoPreview">
+                                        <div class="form-group">
+                                            <label>Current Logo:</label>
+                                            <div class="mt-2">
+                                                <img
+                                                    :src="`${mainOrigin}public/storage/${currentLogoPreview}`"
+                                                    alt="Logo Preview" class="logo-preview" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <ValidationProvider name="Insurance" mode="eager" rules="required" v-slot="{ errors }">
+                                            <div class="form-group">
+                                            <label>Insurance Company <span class="error">*</span></label>
+                                            <select name="insuranceCompany" class="form-control" v-model="insuranceCompany"
+                                                    style="margin: 0">
+                                                <option :value="singleData.InsuranceID"
+                                                        v-for="(singleData , index) in allInsurance"
+                                                        :key="index">{{ singleData.InsuranceName }}
+                                                </option>
+                                            </select>
+                                        </div>
+                                        </ValidationProvider>
+                                    </div>
+
+
+
+
+                                    <!-- Partner Details -->
+                                    <div class="col-12">
+                                        <ValidationProvider name="Partner Details" mode="eager" rules="" v-slot="{ errors }">
+                                            <div class="form-group">
+                                                <label for="partnerDetails">Partner Details</label>
+                                                <textarea
+                                                    class="form-control"
+                                                    :class="{'error-border': errors[0]}"
+                                                    id="partnerDetails"
+                                                    v-model="PartnerDetails"
+                                                    name="partner-details"
+                                                    placeholder="Partner Details"
+                                                    rows="4"
+                                                ></textarea>
+                                                <span class="error-message">{{ errors[0] }}</span>
+                                            </div>
+                                        </ValidationProvider>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            <div class="modal-footer">
+                                <submit-form v-if="buttonShow" :name="buttonText"/>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @click="closeModal">Close</button>
+                            </div>
+                        </form>
+                    </ValidationObserver>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+import { bus } from "../../app";
+import { Common } from "../../mixins/common";
+
+export default {
+    mixins: [Common],
+    data() {
+        return {
+            title: '',
+            PartnerName: '',
+            PartnerDetails: '',
+            PartnerLogo: null,
+            currentLogoPreview: null,
+            buttonText: '',
+            actionType: '',
+            insuranceCompany: '',
+            buttonShow: false,
+            selectedPartner: null,
+            allInsurance: []
+        }
+    },
+    computed: {},
+    mounted() {
+        $('#add-edit-partner').on('hidden.bs.modal', () => {
+            this.$emit('changeStatus')
+        });
+        this.getSupportingData()
+        bus.$on('add-edit-partner', (row) => {
+            if (row) {
+                // Edit mode
+                let instance = this;
+                this.axiosGet('partner/get-partner-info/' + row.PartnerID, function(response) {  // Updated to grouped route
+                    var partner = response.data;
+                    instance.title = 'Update Partner';
+                    instance.buttonText = "Update";
+                    instance.PartnerName = partner.PartnerName;
+                    instance.PartnerDetails = partner.PartnerDetails || '';
+                    instance.selectedPartner = partner;
+                    instance.insuranceCompany = partner.
+
+                    // Set current logo preview if exists
+                    if (partner.PartnerLogo) {
+                        instance.currentLogoPreview = partner.PartnerLogo;
+                    } else {
+                        instance.currentLogoPreview = null;
+                    }
+
+                    instance.buttonShow = true;
+                    instance.actionType = 'edit';
+                }, function(error) {
+                    instance.errorNoti(error.message || 'Error loading partner data');
+                });
+            } else {
+                // Add mode
+                this.title = 'Add Partner';
+                this.buttonText = "Add";
+                this.PartnerName = '';
+                this.PartnerDetails = '';
+                this.PartnerLogo = null;
+                this.currentLogoPreview = null;
+                this.selectedPartner = null;
+                this.buttonShow = true;
+                this.actionType = 'add';
+            }
+
+            $("#add-edit-partner").modal("toggle");
+        })
+    },
+    destroyed() {
+        bus.$off('add-edit-partner')
+    },
+    methods: {
+        closeModal() {
+            $("#add-edit-partner").modal("toggle");
+        },
+        getSupportingData() {
+            this.axiosGet('partner/get-supporting-data', (response) => {
+                try {
+                    this.allInsurance = response.data
+                    console.log(this.allInsurance)
+                } catch (e) {
+                    console.log(e)
+                }
+            }, function (error) {
+            });
+        },
+        handleLogoUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                // Validate file size (2MB)
+                if (file.size > 2048000) {
+                    this.errorNoti('File size must be less than 2MB');
+                    this.$refs.logoInput.value = '';
+                    return;
+                }
+
+                // Validate file type
+                const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
+                if (!allowedTypes.includes(file.type)) {
+                    this.errorNoti('Only JPG, PNG, GIF files are allowed');
+                    this.$refs.logoInput.value = '';
+                    return;
+                }
+
+                this.PartnerLogo = file;
+
+                // Create preview
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    this.currentLogoPreview = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        },
+
+        onSubmit() {
+            this.$store.commit('submitButtonLoadingStatus', true);
+
+            let url = '';
+            if (this.actionType === 'add') {
+                url = 'partner/add';  // Updated to grouped route
+            } else {
+                url = 'partner/update';  // Updated to grouped route
+            }
+
+            // Create FormData for file upload
+            const formData = new FormData();
+            formData.append('PartnerName', this.PartnerName);
+            formData.append('PartnerDetails', this.PartnerDetails || '');
+            formData.append('insuranceCompany', this.insuranceCompany || '');
+
+            // Add PartnerID for update
+            if (this.actionType === 'edit' && this.selectedPartner) {
+                formData.append('PartnerID', this.selectedPartner.PartnerID);
+            }
+
+            if (this.PartnerLogo) {
+                formData.append('PartnerLogo', this.PartnerLogo);
+            }
+
+            this.axiosPost(url, formData, (response) => {
+                this.successNoti(response.message);
+                $("#add-edit-partner").modal("toggle");
+                bus.$emit('refresh-datatable');
+                this.$store.commit('submitButtonLoadingStatus', false);
+                this.resetForm();
+            }, (error) => {
+                this.errorNoti(error.message || 'Error saving partner');
+                this.$store.commit('submitButtonLoadingStatus', false);
+            })
+        },
+
+        resetForm() {
+            this.PartnerName = '';
+            this.PartnerDetails = '';
+            this.PartnerLogo = null;
+            this.currentLogoPreview = null;
+            this.selectedPartner = null;
+
+            // Reset file input
+            if (this.$refs.logoInput) {
+                this.$refs.logoInput.value = '';
+            }
+        },
+
+        getLogoUrl(logoPath) {
+            return `/storage/${logoPath}`;
+        }
+    }
+}
+</script>
+
+<style scoped>
+.logo-preview {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 2px solid #ddd;
+    padding: 4px;
+}
+
+.error-border {
+    border-color: #dc3545 !important;
+}
+
+.error {
+    color: #dc3545;
+}
+
+.error-message {
+    color: #dc3545;
+    font-size: 0.875em;
+}
+</style>

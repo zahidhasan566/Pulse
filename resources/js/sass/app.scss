@@ -103,3 +103,10 @@ a {
 .search {
   margin-bottom: 10px;
 }
+.background {
+    padding: 1px;
+    background-size: cover !important;
+    background: url("https://dms.ifadmotors.com/assets/images/creative-background3.jpg");
+    //background: url("https://wa.acibd.com/e-verification/assets/images/loginBg.png");
+    height: 100vh;
+}

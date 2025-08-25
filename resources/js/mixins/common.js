@@ -129,12 +129,12 @@ export const Common = {
         },
         deleteAlert(callback) {
             Swal.fire({
-                title: 'Are you sure to cancel?',
+                title: 'Are you sure to delete?',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#3085d6',
                 cancelButtonColor: '#d33',
-                confirmButtonText: 'Yes, Cancel it!',
+                confirmButtonText: 'Yes, Delete it!',
                 cancelButtonText: 'No'
             }).then((result) => {
                 if (result.value) {

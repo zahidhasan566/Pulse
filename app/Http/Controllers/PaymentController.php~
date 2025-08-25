@@ -1,0 +1,139 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Sales;
+use App\Models\User;
+use Carbon\Carbon;
+use Exception;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+
+class PaymentController extends Controller
+{
+    public function index(Request $request)
+    {
+        try {
+            $query = Sales::select([
+                'sales.SaleID',
+                'Payments.PaymentID',
+                'sales.FullName',
+                'sales.Email',
+                'sales.ProfilePicture',
+                'sales.MobileNumber',
+                'PackageMaster.PackageName',
+                'Partners.PartnerName',
+                'Agents.AgentName',
+                'sales.CreatedAt'
+            ])
+                ->join('PackageMaster', 'sales.PackageID', '=', 'PackageMaster.PackageID')
+                ->leftJoin('Payments', 'sales.SaleID', '=', 'Payments.SaleID')
+                ->join('Partners', 'Sales.PartnerID', '=', 'Partners.PartnerID')
+                ->join('Agents', 'sales.AgentID', '=', 'Agents.AgentID')
+                ->orderBy('CreatedAt', 'desc');
+
+            // Add search functionality if needed
+            if ($request->has('search') && !empty($request->search)) {
+                $search = $request->search;
+                $query->where(function($q) use ($search) {
+                    $q->where('FullName', 'like', "%{$search}%")
+                        ->orWhere('Email', 'like', "%{$search}%")
+                        ->orWhere('MobileNumber', 'like', "%{$search}%");
+                });
+            }
+
+            $sales = $query->get();
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $sales
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error fetching sales: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function store(Request $request)
+    {
+        try {
+            // Validation rules
+            $validator = Validator::make($request->all(), [
+                'SaleID' => 'required',
+                'Amount' => 'required',
+                'PaymentType' => 'required',
+
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Validation error',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Insert Payments
+            $payments = DB::table('Payments')->insertGetId([
+                'SaleID' => $request->SaleID,
+                'PromoCode' => $request->PromoCode,
+                'Bank' => $request->BankID,
+                'Wallet' => $request->Wallet,
+                'Currency' => $request->Currency,
+                'RefundOption' => $request->RefundOption,
+                'PaymentType' => $request->PaymentType,
+                'PaymentDate' => $request->PaymentDate,
+                'Amount' => $request->Amount,
+                'Status' => 1,
+                'CreatedAt' => now(),
+                'UpdatedAt' => now()
+            ]);
+
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Payment Added Successfully',
+                'data' => [
+                    'paymentsID' => $payments,
+                ]
+            ]);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error creating agent: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function show($id)
+    {
+        try {
+            $payments = DB::table('Payments')
+                ->where('PaymentID', $id)
+                ->first();
+
+            if (!$payments) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Payment not found'
+                ], 404);
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $payments
+            ]);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error fetching agent: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+}

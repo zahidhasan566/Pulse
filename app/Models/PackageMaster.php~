@@ -1,0 +1,25 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class PackageMaster extends Model
+{
+    use HasFactory;
+    protected $table = "PackageMaster";
+    public $primaryKey = 'PackageID';
+    protected $guarded = [];
+    public $timestamps = false;
+
+    public function services()
+    {
+        return $this->belongsToMany(Service::class, 'package_details', 'PackageID', 'ServiceID');
+    }
+
+    public function partners()
+    {
+        return $this->belongsToMany(Partner::class, 'package_details', 'PackageID', 'PartnerID');
+    }
+}

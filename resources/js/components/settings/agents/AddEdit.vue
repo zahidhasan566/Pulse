@@ -1,0 +1,388 @@
+<template>
+    <div>
+        <div class="modal fade" id="add-edit-agent" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="modal-title modal-title-font" id="exampleModalLabel">{{ title }}</div>
+                    </div>
+
+                    <ValidationObserver v-slot="{ handleSubmit }">
+                        <form class="form-horizontal" id="form" @submit.prevent="handleSubmit(onSubmit)">
+                            <div class="modal-body">
+                                <div class="row">
+
+                                    <!-- Agent Code (Read-only for edit, hidden for add) -->
+                                    <div class="col-12 col-md-6" v-if="actionType === 'edit'">
+                                        <div class="form-group">
+                                            <label for="agentCode">Agent Code</label>
+                                            <input
+                                                type="text"
+                                                class="form-control"
+                                                id="agentCode"
+                                                v-model="AgentCode"
+                                                name="agent-code"
+                                                readonly
+                                                style="background-color: #f8f9fa;"
+                                            >
+                                        </div>
+                                    </div>
+
+                                    <!-- Agent Name -->
+                                    <div class="col-12" :class="actionType === 'edit' ? 'col-md-6' : ''">
+                                        <ValidationProvider name="Agent Name" mode="eager" rules="required" v-slot="{ errors }">
+                                            <div class="form-group">
+                                                <label for="agentName">Agent Name <span class="error">*</span></label>
+                                                <input
+                                                    type="text"
+                                                    class="form-control"
+                                                    :class="{'error-border': errors[0]}"
+                                                    id="agentName"
+                                                    v-model="AgentName"
+                                                    name="agent-name"
+                                                    placeholder="Agent Name"
+                                                    autocomplete="off"
+                                                >
+                                                <span class="error-message">{{ errors[0] }}</span>
+                                            </div>
+                                        </ValidationProvider>
+                                    </div>
+
+                                    <!-- Agent Email -->
+                                    <div class="col-12 col-md-6">
+                                        <ValidationProvider name="Agent Email" mode="eager" rules="email" v-slot="{ errors }">
+                                            <div class="form-group">
+                                                <label for="agentEmail">Agent Email</label>
+                                                <input
+                                                    type="email"
+                                                    class="form-control"
+                                                    :class="{'error-border': errors[0]}"
+                                                    id="agentEmail"
+                                                    v-model="AgentEmail"
+                                                    name="agent-email"
+                                                    placeholder="Agent Email"
+                                                    autocomplete="off"
+                                                >
+                                                <span class="error-message">{{ errors[0] }}</span>
+                                            </div>
+                                        </ValidationProvider>
+                                    </div>
+
+                                    <!-- Agent Phone -->
+                                    <div class="col-12 col-md-6">
+                                        <ValidationProvider name="Agent Phone" mode="eager" rules="required" v-slot="{ errors }">
+                                            <div class="form-group">
+                                                <label for="agentPhone">Agent Phone <span class="error">*</span></label>
+                                                <input
+                                                    type="text"
+                                                    class="form-control"
+                                                    :class="{'error-border': errors[0]}"
+                                                    id="agentPhone"
+                                                    v-model="AgentPhone"
+                                                    name="agent-phone"
+                                                    placeholder="Agent Phone"
+                                                    autocomplete="off"
+                                                >
+                                                <span class="error-message">{{ errors[0] }}</span>
+                                            </div>
+                                        </ValidationProvider>
+                                    </div>
+
+                                    <!-- Agent NID -->
+                                    <div class="col-12 col-md-6">
+                                        <ValidationProvider name="Agent NID" mode="eager" rules="" v-slot="{ errors }">
+                                            <div class="form-group">
+                                                <label for="agentNID">Agent NID</label>
+                                                <input
+                                                    type="text"
+                                                    class="form-control"
+                                                    :class="{'error-border': errors[0]}"
+                                                    id="agentNID"
+                                                    v-model="AgentNID"
+                                                    name="agent-nid"
+                                                    placeholder="National ID"
+                                                    autocomplete="off"
+                                                >
+                                                <span class="error-message">{{ errors[0] }}</span>
+                                            </div>
+                                        </ValidationProvider>
+                                    </div>
+
+                                    <!-- Join Date -->
+                                    <div class="col-12 col-md-6">
+                                        <ValidationProvider name="Join Date" mode="eager" rules="" v-slot="{ errors }">
+                                            <div class="form-group">
+                                                <label for="joinDate">Join Date</label>
+                                                <input
+                                                    type="date"
+                                                    class="form-control"
+                                                    :class="{'error-border': errors[0]}"
+                                                    id="joinDate"
+                                                    v-model="JoinDate"
+                                                    name="join-date"
+                                                >
+                                                <span class="error-message">{{ errors[0] }}</span>
+                                            </div>
+                                        </ValidationProvider>
+                                    </div>
+
+                                    <!-- Agent Photo -->
+                                    <div class="col-12 col-md-6">
+                                        <ValidationProvider name="Agent Photo" mode="eager" rules="" v-slot="{ errors }">
+                                            <div class="form-group">
+                                                <label for="agentPhoto">Agent Photo</label>
+                                                <input
+                                                    type="file"
+                                                    class="form-control-file"
+                                                    :class="{'error-border': errors[0]}"
+                                                    id="agentPhoto"
+                                                    @change="handlePhotoUpload"
+                                                    accept="image/*"
+                                                    ref="photoInput"
+                                                >
+                                                <small class="form-text text-muted">Accepted formats: JPG, PNG, GIF. Max size: 2MB</small>
+                                                <span class="error-message">{{ errors[0] }}</span>
+                                            </div>
+                                        </ValidationProvider>
+                                    </div>
+
+                                    <!-- Current Photo Preview -->
+                                    <div class="col-12" v-if="currentPhotoPreview">
+                                        <div class="form-group">
+                                            <label>Current Photo:</label>
+                                            <div class="mt-2">
+                                                <img
+                                                    style="height: 100px; width: 100px; object-fit: cover; border-radius: 4px;"
+                                                    :src="getPhotoPreviewUrl()"
+                                                    alt="Agent Photo Preview"
+                                                    class="photo-preview" />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Agent Address -->
+                                    <div class="col-12">
+                                        <ValidationProvider name="Agent Address" mode="eager" rules="" v-slot="{ errors }">
+                                            <div class="form-group">
+                                                <label for="agentAddress">Agent Address</label>
+                                                <textarea
+                                                    class="form-control"
+                                                    :class="{'error-border': errors[0]}"
+                                                    id="agentAddress"
+                                                    v-model="AgentAddress"
+                                                    name="agent-address"
+                                                    placeholder="Agent Address"
+                                                    rows="3"
+                                                ></textarea>
+                                                <span class="error-message">{{ errors[0] }}</span>
+                                            </div>
+                                        </ValidationProvider>
+                                    </div>
+
+                                </div>
+                            </div>
+
+                            <div class="modal-footer">
+                                <submit-form v-if="buttonShow" :name="buttonText"/>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @click="closeModal">Close</button>
+                            </div>
+                        </form>
+                    </ValidationObserver>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+import { bus } from "../../../app";
+import { Common } from "../../../mixins/common";
+
+export default {
+    mixins: [Common],
+    data() {
+        return {
+            title: '',
+            AgentCode: '',
+            AgentName: '',
+            AgentEmail: '',
+            AgentPhone: '',
+            AgentAddress: '',
+            AgentNID: '',
+            AgentPhoto: null,
+            currentPhotoPreview: null,
+            JoinDate: '',
+            buttonText: '',
+            actionType: '',
+            buttonShow: false,
+            selectedAgent: null
+        }
+    },
+    computed: {},
+    mounted() {
+        $('#add-edit-agent').on('hidden.bs.modal', () => {
+            this.$emit('changeStatus')
+        });
+
+        bus.$on('add-edit-agents', (row) => {
+            if (row) {
+                // Edit mode
+                let instance = this;
+                this.axiosGet('agent/get-agent-info/' + row.AgentID, function(response) {
+                    var agent = response.data;
+                    instance.title = 'Update Agent';
+                    instance.buttonText = "Update";
+                    instance.AgentCode = agent.AgentCode;
+                    instance.AgentName = agent.AgentName;
+                    instance.AgentEmail = agent.AgentEmail || '';
+                    instance.AgentPhone = agent.AgentPhone || '';
+                    instance.AgentAddress = agent.AgentAddress || '';
+                    instance.AgentNID = agent.AgentNID || '';
+                    instance.JoinDate = agent.JoinDate ? agent.JoinDate.split(' ')[0] : '';
+                    instance.selectedAgent = agent;
+
+                    // Set current photo preview if exists
+                    if (agent.AgentPhoto) {
+                        instance.currentPhotoPreview = agent.AgentPhoto;
+                    } else {
+                        instance.currentPhotoPreview = null;
+                    }
+
+                    instance.buttonShow = true;
+                    instance.actionType = 'edit';
+                }, function(error) {
+                    instance.errorNoti(error.message || 'Error loading agent data');
+                });
+            } else {
+                // Add mode
+                this.title = 'Add Agent';
+                this.buttonText = "Add";
+                this.AgentCode = '';
+                this.AgentName = '';
+                this.AgentEmail = '';
+                this.AgentPhone = '';
+                this.AgentAddress = '';
+                this.AgentNID = '';
+                this.AgentPhoto = null;
+                this.currentPhotoPreview = null;
+                this.JoinDate = new Date().toISOString().split('T')[0]; // Default to today
+                this.selectedAgent = null;
+                this.buttonShow = true;
+                this.actionType = 'add';
+            }
+
+            $("#add-edit-agent").modal("toggle");
+        })
+    },
+    destroyed() {
+        bus.$off('add-edit-agents')
+    },
+    methods: {
+        closeModal() {
+            $("#add-edit-agent").modal("toggle");
+        },
+
+        handlePhotoUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                // Validate file size (2MB)
+                if (file.size > 2048000) {
+                    this.errorNoti('File size must be less than 2MB');
+                    this.$refs.photoInput.value = '';
+                    return;
+                }
+
+                // Validate file type
+                const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/gif'];
+                if (!allowedTypes.includes(file.type)) {
+                    this.errorNoti('Only JPG, PNG, GIF files are allowed');
+                    this.$refs.photoInput.value = '';
+                    return;
+                }
+
+                this.AgentPhoto = file;
+
+                // Create preview
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    this.currentPhotoPreview = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        },
+
+        getPhotoPreviewUrl() {
+            if (this.currentPhotoPreview) {
+                // If it starts with data:, it's a base64 preview from file upload
+                if (this.currentPhotoPreview.startsWith('data:')) {
+                    return this.currentPhotoPreview;
+                }
+                // Otherwise it's an existing photo path
+                return `${this.mainOrigin}public/storage/${this.currentPhotoPreview}`;
+            }
+            return '';
+        },
+
+        onSubmit() {
+            this.$store.commit('submitButtonLoadingStatus', true);
+
+            let url = '';
+            if (this.actionType === 'add') {
+                url = 'agent/add';
+            } else {
+                url = 'agent/update';
+            }
+
+            // Create FormData for file upload
+            const formData = new FormData();
+            formData.append('AgentName', this.AgentName);
+            formData.append('AgentEmail', this.AgentEmail || '');
+            formData.append('AgentPhone', this.AgentPhone || '');
+            formData.append('AgentAddress', this.AgentAddress || '');
+            formData.append('AgentNID', this.AgentNID || '');
+            formData.append('JoinDate', this.JoinDate || '');
+
+            // Add AgentID for update
+            if (this.actionType === 'edit' && this.selectedAgent) {
+                formData.append('AgentID', this.selectedAgent.AgentID);
+            }
+
+            if (this.AgentPhoto) {
+                formData.append('AgentPhoto', this.AgentPhoto);
+            }
+
+            this.axiosPost(url, formData, (response) => {
+                this.successNoti(response.message);
+                $("#add-edit-agent").modal("toggle");
+                bus.$emit('refresh-datatable');
+                this.$store.commit('submitButtonLoadingStatus', false);
+                this.resetForm();
+            }, (error) => {
+                this.errorNoti(error.message || 'Error saving agent');
+                this.$store.commit('submitButtonLoadingStatus', false);
+            })
+        },
+
+        resetForm() {
+            this.AgentCode = '';
+            this.AgentName = '';
+            this.AgentEmail = '';
+            this.AgentPhone = '';
+            this.AgentAddress = '';
+            this.AgentNID = '';
+            this.AgentPhoto = null;
+            this.currentPhotoPreview = null;
+            this.JoinDate = '';
+            this.selectedAgent = null;
+
+            // Reset file input
+            if (this.$refs.photoInput) {
+                this.$refs.photoInput.value = '';
+            }
+        }
+    }
+}
+</script>
+
+<style scoped>
+</style>

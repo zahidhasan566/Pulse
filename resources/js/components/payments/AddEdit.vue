@@ -1,0 +1,324 @@
+<template>
+    <div>
+        <div class="modal fade" id="add-edit-payment" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="modal-title modal-title-font" id="exampleModalLabel">{{ title }}</div>
+                    </div>
+
+                    <ValidationObserver v-slot="{ handleSubmit }">
+                        <form class="form-horizontal" id="form" @submit.prevent="handleSubmit(onSubmit)">
+                            <div class="modal-body">
+                                <div class="row">
+                                    <!-- Promo Code -->
+                                    <div class="col-12 col-md-3">
+                                        <ValidationProvider name="Payment Date" mode="eager" rules="required" v-slot="{ errors }">
+                                            <div class="form-group">
+                                                <label for="PaymentDate">Payment Date</label>
+                                                <input
+                                                    type="date"
+                                                    class="form-control"
+                                                    :class="{'error-border': errors[0]}"
+                                                    v-model="PaymentDate"
+                                                    name="PaymentDate"
+                                                    placeholder="Enter Promo Code"
+                                                />
+                                                <span class="error-message">{{ errors[0] }}</span>
+                                            </div>
+                                        </ValidationProvider>
+                                    </div>
+                                    <div class="col-12 col-md-3">
+                                        <ValidationProvider name="Payment Type" mode="eager" rules="required" v-slot="{ errors }">
+                                            <div class="form-group">
+                                                <label for="nomineeGender">Payment Type <span class="error">*</span></label>
+                                                <select
+                                                    class="form-control"
+                                                    :class="{'error-border': errors[0]}"
+                                                    v-model="PaymentType"
+                                                    name="Payment Type"
+                                                >
+                                                    <option value="">Select Payment</option>
+                                                    <option value="MFS">Mobile Financial Services (bKash,Nagad,Rocket)</option>
+                                                    <option value="CashPayment">Cash Payment</option>
+                                                    <option value="BankTransfer">Bank Transfer</option>
+                                                </select>
+                                                <span class="error-message">{{ errors[0] }}</span>
+                                            </div>
+                                        </ValidationProvider>
+                                    </div>
+                                    <!-- Promo Code -->
+                                    <div class="col-12 col-md-3">
+                                        <ValidationProvider name="Amount" mode="eager" rules="min_value:1|max_value:99999999999999" v-slot="{ errors }">
+                                            <div class="form-group">
+                                                <label for="promoCode">Amount <span class="error">*</span></label>
+                                                <input
+                                                    type="number"
+                                                    class="form-control"
+                                                    :class="{'error-border': errors[0]}"
+                                                    v-model="Amount"
+                                                    name="promoCode"
+                                                    placeholder="Enter Amount"
+                                                />
+                                                <span class="error-message">{{ errors[0] }}</span>
+                                            </div>
+                                        </ValidationProvider>
+                                    </div>
+                                    <!-- Promo Code -->
+                                    <div class="col-12 col-md-3">
+                                        <ValidationProvider name="Promo Code" mode="eager" rules="" v-slot="{ errors }">
+                                            <div class="form-group">
+                                                <label for="promoCode">Promo Code</label>
+                                                <input
+                                                    type="text"
+                                                    class="form-control"
+                                                    :class="{'error-border': errors[0]}"
+                                                    v-model="PromoCode"
+                                                    name="promoCode"
+                                                    placeholder="Enter Promo Code"
+                                                />
+                                                <span class="error-message">{{ errors[0] }}</span>
+                                            </div>
+                                        </ValidationProvider>
+                                    </div>
+                                    <!-- Bank -->
+                                    <div class="col-12 col-md-3">
+                                        <ValidationProvider name="Bank" mode="eager" rules="" v-slot="{ errors }">
+                                            <div class="form-group">
+                                                <label for="bank">Bank</label>
+                                                <multiselect
+                                                    v-model="selectedBank"
+                                                    :options="bankOptions"
+                                                    :multiple="false"
+                                                    :close-on-select="true"
+                                                    :clear-on-select="false"
+                                                    :preserve-search="true"
+                                                    placeholder="Select Bank"
+                                                    label="BankName"
+                                                    track-by="BankID"
+                                                    :class="{'error-border': errors[0]}"
+                                                />
+                                                <span class="error-message">{{ errors[0] }}</span>
+                                            </div>
+                                        </ValidationProvider>
+                                    </div>
+
+
+                                    <!-- Wallet -->
+                                    <div class="col-12 col-md-3">
+                                        <ValidationProvider name="Wallet" mode="eager" rules="" v-slot="{ errors }">
+                                            <div class="form-group">
+                                                <label for="wallet">Wallet</label>
+                                                <input
+                                                    type="text"
+                                                    class="form-control"
+                                                    :class="{'error-border': errors[0]}"
+                                                    v-model="Wallet"
+                                                    name="wallet"
+                                                    placeholder="Wallet Information"
+                                                />
+                                                <span class="error-message">{{ errors[0] }}</span>
+                                            </div>
+                                        </ValidationProvider>
+                                    </div>
+
+                                    <!-- Currency -->
+                                    <div class="col-12 col-md-3">
+                                        <ValidationProvider name="Currency" mode="eager" rules="" v-slot="{ errors }">
+                                            <div class="form-group">
+                                                <label for="currency">Currency </label>
+                                                <select
+                                                    class="form-control"
+                                                    :class="{'error-border': errors[0]}"
+                                                    v-model="Currency"
+                                                    name="currency"
+                                                >
+                                                    <option value="">Select Currency</option>
+                                                    <option value="BDT">BDT - Bangladeshi Taka</option>
+                                                    <option value="USD">USD - US Dollar</option>
+                                                    <option value="EUR">EUR - Euro</option>
+                                                    <option value="GBP">GBP - British Pound</option>
+                                                    <option value="INR">INR - Indian Rupee</option>
+                                                    <option value="JPY">JPY - Japanese Yen</option>
+                                                </select>
+                                                <span class="error-message">{{ errors[0] }}</span>
+                                            </div>
+                                        </ValidationProvider>
+                                    </div>
+
+                                    <!-- Refund Option -->
+                                    <div class="col-12 col-md-3">
+                                        <ValidationProvider name="Refund Option" mode="eager" rules="" v-slot="{ errors }">
+                                            <div class="form-group">
+                                                <label for="refundOption">Refund Option</label>
+                                                <select
+                                                    class="form-control"
+                                                    :class="{'error-border': errors[0]}"
+                                                    v-model="RefundOption"
+                                                    name="currency"
+                                                >
+                                                    <option value="">Select Refund Option</option>
+                                                    <option value="Yes">Yes</option>
+                                                    <option value="No">No</option>
+                                                </select>
+                                                <span class="error-message">{{ errors[0] }}</span>
+                                            </div>
+                                        </ValidationProvider>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="modal-footer">
+                                <submit-form v-if="buttonShow" :name="buttonText"/>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @click="closeModal">Close</button>
+                            </div>
+                        </form>
+                    </ValidationObserver>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+import { bus } from "../../app";
+import { Common } from "../../mixins/common";
+
+export default {
+    mixins: [Common],
+    data() {
+        return {
+            title: '',
+            SaleID: '',
+            PaymentID: '',
+            PromoCode: '',
+            selectedBank: null, // to be fetched from API
+            bankOptions: [
+                { BankID: 1, BankName: 'Dutch-Bangla Bank' },
+                { BankID: 2, BankName: 'Islami Bank Bangladesh' },
+                { BankID: 3, BankName: 'BRAC Bank' },
+                { BankID: 4, BankName: 'City Bank' },
+                { BankID: 5, BankName: 'Eastern Bank' },
+                { BankID: 6, BankName: 'Premier Bank' },
+                { BankID: 7, BankName: 'Standard Chartered Bank' },
+                { BankID: 8, BankName: 'Sonali Bank' },
+                { BankID: 9, BankName: 'Janata Bank' },
+                { BankID: 10, BankName: 'Agrani Bank' }
+            ],
+            Wallet: '',
+            Currency: '',
+            RefundOption: '',
+            buttonText: '',
+            actionType: '',
+            PaymentType: '',
+            PaymentDate: '',
+            Amount: 0,
+            buttonShow: false,
+            selectedPayment: null
+        }
+    },
+    mounted() {
+        $('#add-edit-payment').on('hidden.bs.modal', () => {
+            this.$emit('changeStatus')
+        });
+        this.PaymentDate = new Date().toISOString().split('T')[0];
+        bus.$on('add-edit-payments', (row) => {
+            this.SaleID = row.SaleID;
+            if (row.PaymentID) {
+                this.PaymentID = row.PaymentID;
+                // Edit mode
+                let instance = this;
+                this.axiosGet('payments/get-payment-info/' + row.PaymentID, function(response) {
+                    var payment = response.data;
+                    instance.title = 'Update Payment';
+                    instance.buttonText = "Update";
+                    instance.PromoCode = payment.PromoCode || '';
+                    instance.Wallet = payment.Wallet || '';
+                    instance.Amount = payment.Amount || '';
+                    instance.PaymentDate =  payment.PaymentDate.split(' ')[0];
+                    instance.PaymentType= payment.PaymentType || '';
+                    instance.Currency = payment.Currency || '';
+                    instance.RefundOption = payment.RefundOption || '';
+                    instance.selectedPayment = payment;
+                    instance.buttonShow = true;
+                    instance.actionType = 'edit';
+                    if(payment.Bank) {
+                        instance.selectedBank = instance.bankOptions.find(p => Number(p.BankID) === Number(payment.Bank)) || null;
+                    }
+
+                }, function(error) {
+                    instance.errorNoti(error.message || 'Error loading payment data');
+                });
+            } else {
+                // Add mode
+                this.title = 'Add Payment';
+                this.buttonText = "Add";
+                this.PromoCode = '';
+                this.selectedBank = null;
+                this.Wallet = '';
+                this.Currency = '';
+                this.RefundOption = '';
+                this.selectedPayment = null;
+                this.buttonShow = true;
+                this.actionType = 'add';
+            }
+
+            $("#add-edit-payment").modal("toggle");
+        })
+    },
+    destroyed() {
+        bus.$off('add-edit-payments')
+    },
+    methods: {
+        closeModal() {
+            $("#add-edit-payment").modal("toggle");
+        },
+
+        onSubmit() {
+            this.$store.commit('submitButtonLoadingStatus', true);
+
+            let url = this.actionType === 'add' ? 'payments/add' : 'payments/update';
+
+            const formData = new FormData();
+            formData.append('PromoCode', this.PromoCode || '');
+            formData.append('PaymentDate', this.PaymentDate || '');
+            formData.append('SaleID', this.SaleID || '');
+            formData.append('BankID', this.selectedBank ? this.selectedBank.BankID : '');
+            formData.append('Wallet', this.Wallet || '');
+            formData.append('Amount', this.Amount);
+            formData.append('PaymentType', this.PaymentType);
+            formData.append('Currency', this.Currency || '');
+            formData.append('RefundOption', this.RefundOption || '');
+
+            if (this.actionType === 'edit' && this.PaymentID) {
+                formData.append('PaymentID', this.PaymentID);
+            }
+
+            this.axiosPost(url, formData, (response) => {
+                this.successNoti(response.message);
+                $("#add-edit-payment").modal("toggle");
+                bus.$emit('refresh-datatable');
+                this.$store.commit('submitButtonLoadingStatus', false);
+                this.resetForm();
+            }, (error) => {
+                this.errorNoti(error.message || 'Error saving payment');
+                this.$store.commit('submitButtonLoadingStatus', false);
+            })
+        },
+
+        resetForm() {
+            this.PromoCode = '';
+            this.selectedBank = null;
+            this.Wallet = '';
+            this.Currency = '';
+            this.RefundOption = '';
+            this.PaymentType = '';
+            this.Amount =0;
+            this.selectedPayment = null;
+        }
+    }
+}
+</script>
+
+<style scoped>
+</style>

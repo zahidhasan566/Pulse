@@ -8,11 +8,18 @@ import NotFound from '../views/404/Index';
 
 import Users from '../views/users/Index';
 import ReportAllShopInformation from "../views/reports/reportAllShopInformation.vue";
-import AssignVroIndex from "../views/vro/AssignVroIndex.vue";
 import ApprovalIndex from "../views/approval/ApprovalIndex.vue";
 import shopInformationPrint from "../views/reports/shopInformationPrint.vue";
 import RoleList from '../views/roles/Index.vue';
 import RolePermission from '../views/roles/Permission.vue';
+import Partners from "../views/Partner/Partners.vue";
+import insurance from "../views/settings/Insurance/Insurance.vue";
+import Service from "../views/Services/Index.vue";
+import Package from "../views/package/Index.vue";
+import Agents from "../views/settings/Agents/Index.vue";
+import Sales from "../views/sales/Index.vue";
+import SalesInvoice from '../components/sales/AddEdit.vue';
+import Payments from "../views/payments/Index.vue";
 
 Vue.use(VueRouter);
 
@@ -68,23 +75,59 @@ const routes = [
                 name: 'Users',
                 component: Users
             },
-            //Approval
+            //partner
             {
-                path: baseurl + 'approval/approve-shop-requisition',
-                name: 'ApprovalIndex',
-                component: ApprovalIndex
+                path: baseurl + 'partner_name',
+                name: 'Partners',
+                component: Partners
             },
-            //Report
+            //service
             {
-                path: baseurl + 'report/shop-information-report',
-                name: 'ReportAllShopInformation',
-                component: ReportAllShopInformation
+                path: baseurl + 'service_name',
+                name: 'Service',
+                component: Service
+            },
+            //package
+            {
+                path: baseurl + 'package_name',
+                name: 'Package',
+                component: Package
+            },
+            //sales
+            {
+                path: baseurl + 'sales',
+                name: 'Sales',
+                component: Sales
             },
             {
-                path: baseurl + 'report/shop-information-report/print/:shopId',
-                name: 'shopInformationPrint',
-                component: shopInformationPrint
+                path: baseurl + 'sales-add/:id?',
+                name: 'SalesInvoice',
+                component: SalesInvoice
             },
+
+            //Payment Transactions
+            {
+                path: baseurl + 'payments/transactions',
+                name: 'Payments',
+                component: Payments
+            },
+
+
+
+
+            //Settings-Insurance
+            {
+                path: baseurl + 'settings/insurance',
+                name: 'insurance',
+                component: insurance
+            },
+            //Settings-Agent
+            {
+                path: baseurl + 'settings/agents',
+                name: 'Agents',
+                component: Agents
+            },
+
 
 
 

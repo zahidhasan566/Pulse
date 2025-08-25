@@ -1,0 +1,186 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Partner;
+use App\Models\Settings\Insurance;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
+
+class PartnerController extends Controller
+{
+    /**
+     * Display a listing of partners
+     */
+    public function index(Request $request)
+    {
+        $query = Partner::query();
+
+        // Search functionality
+        if ($request->has('search') && !empty($request->search)) {
+            $query->where('PartnerName', 'like', '%' . $request->search . '%')
+                ->orWhere('PartnerDetails', 'like', '%' . $request->search . '%');
+        }
+
+        $partners = $query->select('PartnerID','PartnerName','PartnerDetails','PartnerLogo','Insurance.InsuranceName')
+            ->join('Insurance','Insurance.InsuranceID','Partners.InsuranceID',)
+            ->orderBy('PartnerID', 'desc')->paginate(10);
+
+        return response()->json($partners);
+    }
+
+    public function getSupportingData(){
+        $insuranceCompany  = Insurance::all();
+
+        return response()->json([
+            'success' => true,
+            'data' => $insuranceCompany
+        ], 201);
+    }
+    /**
+     * Store a newly created partner
+     */
+    public function store(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'PartnerName' => 'required|string|max:255',
+            'insuranceCompany' => 'required',
+            'PartnerDetails' => 'nullable|string',
+            'PartnerLogo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $partner = new Partner();
+        $partner->PartnerName = $request->PartnerName;
+        $partner->PartnerDetails = $request->PartnerDetails;
+        $partner->InsuranceID = $request->insuranceCompany;
+
+        // Handle logo upload
+        if ($request->hasFile('PartnerLogo')) {
+            $logoPath = $request->file('PartnerLogo')->store('partner-logos', 'public');
+            $partner->PartnerLogo = $logoPath;
+        }
+
+        $partner->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Partner created successfully',
+            'data' => $partner
+        ], 201);
+    }
+
+    /**
+     * Display the specified partner
+     */
+    public function show($id)
+    {
+        $partner = Partner::find($id);
+
+        if (!$partner) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Partner not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $partner
+        ]);
+    }
+
+    /**
+     * Update the specified partner
+     */
+    public function update(Request $request)
+    {
+        $partner = Partner::find($request->PartnerID);
+
+        if (!$partner) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Partner not found'
+            ], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'PartnerName' => 'required|string|max:255',
+            'PartnerDetails' => 'nullable|string',
+            'insuranceCompany' => 'required',
+            'PartnerLogo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $partner->PartnerName = $request->PartnerName;
+        $partner->PartnerDetails = $request->PartnerDetails;
+        $partner->InsuranceID = $request->insuranceCompany;
+
+        // Handle logo upload
+        if ($request->hasFile('PartnerLogo')) {
+            // Delete old logo if exists
+            if ($partner->PartnerLogo) {
+                Storage::disk('public')->delete($partner->PartnerLogo);
+            }
+
+            $logoPath = $request->file('PartnerLogo')->store('partner-logos', 'public');
+            $partner->PartnerLogo = $logoPath;
+        }
+
+        $partner->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Partner updated successfully',
+            'data' => $partner
+        ]);
+    }
+
+    /**
+     * Remove the specified partner (Admin only)
+     */
+    public function destroy($id)
+    {
+        // Check if user is admin
+        if (auth()->user()->RoleID !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized. Admin access required.'
+            ], 403);
+        }
+
+        $partner = Partner::find($id);
+
+        if (!$partner) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Partner not found'
+            ], 404);
+        }
+
+        // Delete logo file if exists
+        if ($partner->PartnerLogo) {
+            Storage::disk('public')->delete($partner->PartnerLogo);
+        }
+
+        $partner->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Partner deleted successfully'
+        ]);
+    }
+}
