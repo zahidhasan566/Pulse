@@ -54,7 +54,7 @@
 
                             <!-- OTP Sent Confirmation Message -->
                             <div v-if="otpSent" class="text-center">
-                                <p class="otp-sent-message" style="color: #000000">OTP has been sent to your mobile number: {{ usermailorphone }}</p>
+                                <p class="otp-sent-message">OTP has been sent to your mobile number: {{ usermailorphone }}</p>
                             </div>
                         </form>
                     </ValidationObserver>
