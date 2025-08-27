@@ -57,6 +57,9 @@ export default {
     computed: {
         isAdmin() {
             return this.$store.state.me && this.$store.state.me.RoleID === 'admin';
+        },
+        me() {
+            return this.$store.state.me
         }
     },
     methods: {

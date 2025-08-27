@@ -47,11 +47,11 @@
                                             </div>
                                         </ValidationProvider>
                                     </div>
-                                    <!-- Promo Code -->
+                                    <!-- Amount -->
                                     <div class="col-12 col-md-3">
                                         <ValidationProvider name="Amount" mode="eager" rules="min_value:1|max_value:99999999999999" v-slot="{ errors }">
                                             <div class="form-group">
-                                                <label for="promoCode">Amount <span class="error">*</span></label>
+                                                <label for="promoCode">Customer Amount <span class="error">*</span></label>
                                                 <input
                                                     type="number"
                                                     class="form-control"
@@ -165,6 +165,23 @@
                                             </div>
                                         </ValidationProvider>
                                     </div>
+
+                                    <div class="col-12 col-md-3">
+                                        <ValidationProvider name="Amount" mode="eager" rules="" v-slot="{ errors }">
+                                            <div class="form-group">
+                                                <label for="promoCode">Agent Commission (In Amount)</label>
+                                                <input
+                                                    type="number"
+                                                    class="form-control"
+                                                    :class="{'error-border': errors[0]}"
+                                                    v-model="AgentCommission"
+                                                    name="promoCode"
+                                                    placeholder="Enter Amount"
+                                                />
+                                                <span class="error-message">{{ errors[0] }}</span>
+                                            </div>
+                                        </ValidationProvider>
+                                    </div>
                                 </div>
                             </div>
 
@@ -193,18 +210,7 @@ export default {
             PaymentID: '',
             PromoCode: '',
             selectedBank: null, // to be fetched from API
-            bankOptions: [
-                { BankID: 1, BankName: 'Dutch-Bangla Bank' },
-                { BankID: 2, BankName: 'Islami Bank Bangladesh' },
-                { BankID: 3, BankName: 'BRAC Bank' },
-                { BankID: 4, BankName: 'City Bank' },
-                { BankID: 5, BankName: 'Eastern Bank' },
-                { BankID: 6, BankName: 'Premier Bank' },
-                { BankID: 7, BankName: 'Standard Chartered Bank' },
-                { BankID: 8, BankName: 'Sonali Bank' },
-                { BankID: 9, BankName: 'Janata Bank' },
-                { BankID: 10, BankName: 'Agrani Bank' }
-            ],
+            bankOptions:[],
             Wallet: '',
             Currency: '',
             RefundOption: '',
@@ -213,11 +219,13 @@ export default {
             PaymentType: '',
             PaymentDate: '',
             Amount: 0,
+            AgentCommission: 0,
             buttonShow: false,
             selectedPayment: null
         }
     },
     mounted() {
+        this.fetchSupportingData();
         $('#add-edit-payment').on('hidden.bs.modal', () => {
             this.$emit('changeStatus')
         });
@@ -234,7 +242,8 @@ export default {
                     instance.buttonText = "Update";
                     instance.PromoCode = payment.PromoCode || '';
                     instance.Wallet = payment.Wallet || '';
-                    instance.Amount = payment.Amount || '';
+                    instance.Amount = payment.Amount || 0;
+                    instance.AgentCommission = payment.AgentCommission || 0;
                     instance.PaymentDate =  payment.PaymentDate.split(' ')[0];
                     instance.PaymentType= payment.PaymentType || '';
                     instance.Currency = payment.Currency || '';
@@ -273,7 +282,13 @@ export default {
         closeModal() {
             $("#add-edit-payment").modal("toggle");
         },
-
+        fetchSupportingData() {
+            this.axiosGet('payments/get-supporting-data', (response) => {
+                this.bankOptions = response.data || [];
+            }, (error) => {
+                this.errorNoti('Error loading supporting data');
+            });
+        },
         onSubmit() {
             this.$store.commit('submitButtonLoadingStatus', true);
 
@@ -286,6 +301,7 @@ export default {
             formData.append('BankID', this.selectedBank ? this.selectedBank.BankID : '');
             formData.append('Wallet', this.Wallet || '');
             formData.append('Amount', this.Amount);
+            formData.append('AgentCommission', this.AgentCommission);
             formData.append('PaymentType', this.PaymentType);
             formData.append('Currency', this.Currency || '');
             formData.append('RefundOption', this.RefundOption || '');

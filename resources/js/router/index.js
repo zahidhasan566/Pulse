@@ -7,9 +7,8 @@ import {baseurl} from '../base_url'
 import NotFound from '../views/404/Index';
 
 import Users from '../views/users/Index';
-import ReportAllShopInformation from "../views/reports/reportAllShopInformation.vue";
+import ReportAllSalesList from "../views/reports/reportAllSalesList.vue";
 import ApprovalIndex from "../views/approval/ApprovalIndex.vue";
-import shopInformationPrint from "../views/reports/shopInformationPrint.vue";
 import RoleList from '../views/roles/Index.vue';
 import RolePermission from '../views/roles/Permission.vue';
 import Partners from "../views/Partner/Partners.vue";
@@ -20,6 +19,8 @@ import Agents from "../views/settings/Agents/Index.vue";
 import Sales from "../views/sales/Index.vue";
 import SalesInvoice from '../components/sales/AddEdit.vue';
 import Payments from "../views/payments/Index.vue";
+import SubscriberList from "../views/members/Index.vue";
+import Banks from "../views/settings/Banks/Index.vue";
 
 Vue.use(VueRouter);
 
@@ -112,6 +113,12 @@ const routes = [
                 component: Payments
             },
 
+            //Members
+            {
+                path: baseurl + 'member/subscriber_list',
+                name: 'SubscriberList',
+                component: SubscriberList
+            },
 
 
 
@@ -126,6 +133,18 @@ const routes = [
                 path: baseurl + 'settings/agents',
                 name: 'Agents',
                 component: Agents
+            },
+            //Settings-banks
+            {
+                path: baseurl + 'settings/banks',
+                name: 'Banks',
+                component: Banks
+            },
+            //Report
+            {
+                path: baseurl + 'report/sales_list',
+                name: 'ReportAllSalesList',
+                component: ReportAllSalesList
             },
 
 

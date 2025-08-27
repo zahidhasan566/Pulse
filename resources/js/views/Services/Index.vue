@@ -85,7 +85,7 @@ export default {
     },
 
     exportData() {
-      bus.$emit('export-data', 'partner-list-' + moment().format('YYYY-MM-DD'))
+      bus.$emit('export-data', 'service-list-' + moment().format('YYYY-MM-DD'))
     },
 
     getLogoUrl(logoPath) {

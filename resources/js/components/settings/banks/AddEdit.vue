@@ -1,0 +1,213 @@
+<template>
+    <div>
+        <div class="modal fade" id="add-edit-service" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <div class="modal-title modal-title-font" id="exampleModalLabel">{{ title }}</div>
+                    </div>
+
+                    <ValidationObserver v-slot="{ handleSubmit }">
+                        <form class="form-horizontal" id="form" @submit.prevent="handleSubmit(onSubmit)">
+                            <div class="modal-body">
+                                <div class="row">
+
+                                    <!-- Service Name -->
+                                    <div class="col-12 col-md-6">
+                                        <ValidationProvider name="Bank Name" mode="eager" rules="required" v-slot="{ errors }">
+                                            <div class="form-group">
+                                                <label for="serviceName">Bank Name <span class="error">*</span></label>
+                                                <input
+                                                    type="text"
+                                                    class="form-control"
+                                                    :class="{'error-border': errors[0]}"
+                                                    id="serviceName"
+                                                    v-model="BankName"
+                                                    name="BankName"
+                                                    placeholder="Bank Name"
+                                                    autocomplete="off"
+                                                >
+                                                <span class="error-message">{{ errors[0] }}</span>
+                                            </div>
+                                        </ValidationProvider>
+                                    </div>
+
+                                    <!-- Account Number -->
+                                    <div class="col-12 col-md-6">
+                                        <ValidationProvider name="Account Number" mode="eager" rules="" v-slot="{ errors }">
+                                            <div class="form-group">
+                                                <label for="serviceAmount">Account Number </label>
+                                                <input
+                                                    type="text"
+                                                    class="form-control"
+                                                    :class="{'error-border': errors[0]}"
+                                                    id="serviceAmount"
+                                                    v-model="AccountNumber"
+                                                    name="service-amount"
+                                                    placeholder="Account Number"
+                                                    autocomplete="off"
+                                                >
+                                                <span class="error-message">{{ errors[0] }}</span>
+                                            </div>
+                                        </ValidationProvider>
+                                    </div>
+
+                                    <!-- Account Holder -->
+                                    <div class="col-12 col-md-6">
+                                        <ValidationProvider name="Account Holder" mode="eager" rules="" v-slot="{ errors }">
+                                            <div class="form-group">
+                                                <label for="serviceAmount">Account Holder </label>
+                                                <input
+                                                    type="text"
+                                                    class="form-control"
+                                                    :class="{'error-border': errors[0]}"
+                                                    id="AccountHolder"
+                                                    v-model="AccountHolder"
+                                                    name="service-amount"
+                                                    placeholder="Account Holder"
+                                                    autocomplete="off"
+                                                >
+                                                <span class="error-message">{{ errors[0] }}</span>
+                                            </div>
+                                        </ValidationProvider>
+                                    </div>
+
+
+                                </div>
+                            </div>
+
+                            <div class="modal-footer">
+                                <submit-form v-if="buttonShow" :name="buttonText"/>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" @click="closeModal">Close</button>
+                            </div>
+                        </form>
+                    </ValidationObserver>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+import { bus } from "../../../app";
+import { Common } from "../../../mixins/common";
+
+export default {
+    mixins: [Common],
+    data() {
+        return {
+            title: '',
+            BankID: '',
+            BankName: '',
+            AccountNumber: 0,
+            AccountHolder: '',
+            buttonText: '',
+            actionType: '',
+            buttonShow: false,
+            selectedService: null
+        }
+    },
+    computed: {},
+    mounted() {
+        $('#add-edit-service').on('hidden.bs.modal', () => {
+            this.$emit('changeStatus')
+        });
+
+        bus.$on('add-edit-banks', (row) => {
+            if (row) {
+                // Edit mode
+                let instance = this;
+                this.axiosGet('banks/get-bank-info/' + row.BankID, function(response) {
+                    var banks = response.data;
+                    instance.title = 'Update Bank';
+                    instance.buttonText = "Update";
+                    instance.BankName = banks.BankName;
+                    instance.AccountNumber = banks.AccountNumber;
+                    instance.AccountHolder = banks.AccountHolder;
+                    instance.BankID = banks.BankID;
+
+                    instance.buttonShow = true;
+                    instance.actionType = 'edit';
+                }, function(error) {
+                    instance.errorNoti(error.message || 'Error loading service data');
+                });
+            } else {
+                // Add mode
+                this.title = 'Add Bank';
+                this.buttonText = "Add";
+                this.ServiceName = '';
+                this.ServiceAmount = '';
+                this.ServiceDetails = '';
+                this.selectedService = null;
+                this.buttonShow = true;
+                this.actionType = 'add';
+            }
+
+            $("#add-edit-service").modal("toggle");
+        })
+    },
+    destroyed() {
+        bus.$off('add-edit-banks')
+    },
+    methods: {
+        closeModal() {
+            $("#add-edit-service").modal("toggle");
+        },
+
+        onSubmit() {
+            this.$store.commit('submitButtonLoadingStatus', true);
+
+            let url = '';
+            if (this.actionType === 'add') {
+                url = 'banks/add';
+            } else {
+                url = 'banks/update';
+            }
+            // Prepare data object
+            const data = {
+                BankName: this.BankName,
+                AccountNumber: this.AccountNumber || '',
+                AccountHolder: this.AccountHolder || '',
+            };
+
+            // Add ServiceID for update
+            if (this.actionType === 'edit') {
+                data.BankID = this.BankID;
+            }
+
+            this.axiosPost(url, data, (response) => {
+                this.successNoti(response.message);
+                $("#add-edit-service").modal("toggle");
+                bus.$emit('refresh-datatable');
+                this.$store.commit('submitButtonLoadingStatus', false);
+                this.resetForm();
+            }, (error) => {
+                this.errorNoti(error.message || 'Error saving service');
+                this.$store.commit('submitButtonLoadingStatus', false);
+            })
+        },
+
+        resetForm() {
+            this.ServiceName = '';
+            this.ServiceAmount = '';
+            this.ServiceDetails = '';
+            this.selectedService = null;
+        }
+    }
+}
+</script>
+
+<style scoped>
+.error-border {
+    border-color: #dc3545 !important;
+}
+
+.error {
+    color: #dc3545;
+}
+
+.error-message {
+    color: #dc3545;
+    font-size: 0.875em;
+}
+</style>

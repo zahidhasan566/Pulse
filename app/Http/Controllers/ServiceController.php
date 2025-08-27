@@ -33,6 +33,7 @@ class ServiceController extends Controller
         $validator = Validator::make($request->all(), [
             'ServiceName' => 'required',
             'ServiceAmount' => 'required',
+            'ServiceClaimAmount' => 'required',
             'ServiceDetails' => 'nullable|string',
         ]);
 
@@ -46,6 +47,7 @@ class ServiceController extends Controller
         $data = new Service();
         $data->ServiceName = $request->ServiceName;
         $data->ServiceAmount = $request->ServiceAmount;
+        $data->ServiceClaimAmount = $request->ServiceClaimAmount;
         $data->ServiceDetails = $request->ServiceDetails;
 
 
@@ -108,6 +110,7 @@ class ServiceController extends Controller
 
         $data->ServiceName = $request->ServiceName;
         $data->ServiceAmount = $request->ServiceAmount;
+        $data->ServiceClaimAmount = $request->ServiceClaimAmount;
         $data->ServiceDetails = $request->ServiceDetails;
 
         $data->save();

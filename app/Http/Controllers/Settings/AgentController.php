@@ -119,7 +119,7 @@ class AgentController extends Controller
             $user->NID = $request->AgentNID;
             $user->RawPassword = ('123456');
             $user->Password = bcrypt('123456');
-            $user->RoleID = 'Customer';
+            $user->RoleID = 'Agent';
             $user->Status = 1;
             $user->CreatedBy = Auth::user()->UserID;
             $user->UpdatedBy = Auth::user()->UserID;

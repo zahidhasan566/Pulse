@@ -161,7 +161,7 @@ import moment from "moment";
 
 export default {
   components: {DatePicker},
-  props: ['options','advance','business','department','paymentModes','banks','action'],
+  props: ['options','advance','business','department','paymentModes','Banks','action'],
   mixins: [Common],
   data() {
     return {

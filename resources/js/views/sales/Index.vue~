@@ -43,7 +43,7 @@ export default {
             tableOptions: {
                 source: 'sale/list',  // Adjust to your API for sales
                 search: true,
-                slots: [8,9], // Columns for Action and other data
+                slots: [7,8], // Columns for Action and other data
                 hideColumn: ['SaleID','ProfilePicture'],
                 slotsName: ['image','action'],
                 sortable: [1, 2], // Enable sorting for some columns like Date, Amount

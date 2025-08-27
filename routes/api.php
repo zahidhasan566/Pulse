@@ -33,6 +33,9 @@ Route::group(['middleware' => ['jwt']], function () {
 
 Route::group(['middleware' => ['jwt:api']], function () {
 
+    //Dashboard
+    Route::get('dashboard-data', [\App\Http\Controllers\Common\DashboardController::class, 'index']);
+
     // ADMIN USERS
     Route::group(['prefix' => 'user'],function () {
         Route::post('list', [\App\Http\Controllers\Admin\Users\AdminUserController::class, 'index']);
@@ -122,6 +125,14 @@ Route::group(['middleware' => ['jwt:api']], function () {
         Route::get('get-agent-info/{id}', [AgentController::class, 'show']);
         Route::delete('delete/{id}', [AgentController::class, 'destroy']);
     });
+    // Agents Routes Group
+    Route::prefix('banks')->group(function () {
+        Route::post('list', [\App\Http\Controllers\Settings\BankController::class, 'index']);
+        Route::post('add', [\App\Http\Controllers\Settings\BankController::class, 'store']);
+        Route::post('update', [\App\Http\Controllers\Settings\BankController::class, 'update']);
+        Route::get('get-bank-info/{id}', [\App\Http\Controllers\Settings\BankController::class, 'show']);
+        Route::delete('delete/{id}', [\App\Http\Controllers\Settings\BankController::class, 'destroy']);
+    });
     // Sales routes
     Route::prefix('sale')->group(function () {
         Route::get('get-supporting-data', [SaleController::class, 'getSupportingData']); // Route for fetching partner and package data
@@ -140,6 +151,21 @@ Route::group(['middleware' => ['jwt:api']], function () {
         Route::post('update', [\App\Http\Controllers\PaymentController::class, 'update']); // Route to update an existing sale
         Route::get('get-payment-info/{id}', [\App\Http\Controllers\PaymentController::class, 'show']); // Route to get detailed info for a sale
         Route::delete('delete/{id}', [\App\Http\Controllers\PaymentController::class, 'destroy']); // Route to delete a sale
+    });
+
+    // Member
+    Route::prefix('member')->group(function () {
+        Route::get('get-supporting-data', [\App\Http\Controllers\PaymentController::class, 'getSupportingData']); // Route for fetching partner and package data
+        Route::post('list', [\App\Http\Controllers\MemberController::class, 'index']); // Route to list sales
+        Route::post('add', [\App\Http\Controllers\PaymentController::class, 'store']); // Route to add a new sale
+        Route::post('update', [\App\Http\Controllers\PaymentController::class, 'update']); // Route to update an existing sale
+        Route::get('get-payment-info/{id}', [\App\Http\Controllers\PaymentController::class, 'show']); // Route to get detailed info for a sale
+        Route::delete('delete/{id}', [\App\Http\Controllers\PaymentController::class, 'destroy']); // Route to delete a sale
+    });
+
+    Route::group(['prefix' => 'reports'],function () {
+        Route::post('all-sales-information',[\App\Http\Controllers\Admin\Reports\ReportController::class,'getAllShopInformation']);
+
     });
 
 });

@@ -75,7 +75,7 @@ export default {
       }
 
       this.deleteAlert(() => {
-        this.axiosDelete('partner/delete', id, (response) => {  // Updated to grouped route
+        this.axiosDelete('service/delete', id, (response) => {  // Updated to grouped route
           this.successNoti(response.message);
           bus.$emit('refresh-datatable');
         }, (error) => {

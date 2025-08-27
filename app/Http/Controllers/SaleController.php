@@ -47,6 +47,7 @@ class SaleController extends Controller
 
     public function index(Request $request)
     {
+        $roleId = Auth::user()->RoleID;
         try {
             $query = Sales::select([
                     'sales.SaleID',
@@ -73,6 +74,19 @@ class SaleController extends Controller
                         ->orWhere('MobileNumber', 'like', "%{$search}%");
                 });
             }
+            if($roleId ==='Agent'){
+                $findAgentId = Agents::where('AgentCode', Auth::user()->UserID)->first();
+                if($findAgentId){
+                    $query->where('sales.AgentID', $findAgentId->AgentID);
+                }
+                else{
+                    return response()->json([
+                        'status' => 'error',
+                        'message' => 'Error fetching sales: '
+                    ], 500);
+                }
+            }
+
 
             $sales = $query->get();
 

@@ -1,0 +1,158 @@
+<?php
+
+namespace App\Http\Controllers\Settings;
+
+use App\Http\Controllers\Controller;
+use App\Models\Service;
+use App\Models\Settings\Banks;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+
+class BankController extends Controller
+{
+    public function index(Request $request)
+    {
+        try {
+            $query = DB::table('Banks')
+                ->select([
+                    'BankID',
+                    'BankName',
+                    'AccountNumber',
+                    'AccountHolder'
+                ])
+                ->orderBy('BankID', 'asc');
+
+            // Add search functionality if needed
+            if ($request->has('search') && !empty($request->search)) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->where('BankName', 'like', "%{$search}%")
+                        ->orWhere('AccountNumber', 'like', "%{$search}%")
+                        ->orWhere('AccountHolder', 'like', "%{$search}%");
+                });
+            }
+
+            $agents = $query->get();
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $agents
+            ]);
+        } catch (Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error fetching agents: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function store(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'BankName' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $data = new Banks();
+        $data->BankName = $request->BankName;
+        $data->AccountNumber = $request->AccountNumber;
+        $data->AccountHolder = $request->AccountHolder;
+
+        $data->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Bank created successfully',
+            'data' => $data
+        ], 201);
+    }
+
+    public function show($id)
+    {
+        $data = Banks::find($id);
+
+        if (!$data) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bank not found'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $data
+        ]);
+    }
+
+    public function update(Request $request)
+    {
+        $data = Banks::find($request->BankID);
+
+        if (!$data) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Service not found'
+            ], 404);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'BankName' => 'required',
+        ]);
+
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $data->BankName = $request->BankName;
+        $data->AccountNumber = $request->AccountNumber;
+        $data->AccountHolder = $request->AccountHolder;
+
+        $data->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Bank updated successfully',
+            'data' => $data
+        ]);
+    }
+
+    /**
+     * Remove the specified partner (Admin only)
+     */
+    public function destroy($id)
+    {
+        // Check if user is admin
+        if (auth()->user()->RoleID !== 'admin') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized. Admin access required.'
+            ], 403);
+        }
+
+        $data = Banks::find($id);
+
+        if (!$data) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Banks not found'
+            ], 404);
+        }
+        $data->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Bank deleted successfully'
+        ]);
+    }
+}

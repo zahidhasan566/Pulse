@@ -6,6 +6,12 @@
                 <!-- Left Menu Start -->
                 <ul class="metismenu" id="side-menu">
                     <li class="menu-title">Main</li>
+                    <li>
+                        <router-link :to="{name: 'Dashboard'}" class="waves-effect" role="button">
+                            <i class="ti-home"></i>
+                            <span>Dashboard</span>
+                        </router-link>
+                    </li>
                     <li v-for="(menu,index) in menus" :key="index" v-if="(menu.sub_menus.length >=1 && me.RoleID !=='SuperAdmin') || (menu.sub_menus.length >=0 && me.RoleID ==='SuperAdmin' )">
                         <router-link :to="`${MenuBaseUrl}${menu.MenuLink}`" class="waves-effect" :id="`area${index}`">
                             <i :class="menu.MenuIcon"></i>

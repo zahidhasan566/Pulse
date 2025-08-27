@@ -51,6 +51,7 @@ Vue.component('add-edit-service', require('./components/service/AddEdit.vue').de
 Vue.component('add-edit-package', require('./components/package/AddEdit.vue').default);
 Vue.component('add-edit-agents', require('./components/settings/Agents/AddEdit.vue').default);
 Vue.component('add-edit-payments', require('./components/payments/AddEdit.vue').default);
+Vue.component('add-edit-banks', require('./components/settings/banks/AddEdit.vue').default);
 const app = new Vue({
     el: '#app',
     store: store,

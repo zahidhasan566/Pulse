@@ -33,7 +33,7 @@
                                     </div>
 
                                     <!-- Service Amount -->
-                                    <div class="col-12 col-md-6">
+                                    <div class="col-12 col-md-3">
                                         <ValidationProvider name="Service Amount" mode="eager" rules="required|numeric|min_value:0" v-slot="{ errors }">
                                             <div class="form-group">
                                                 <label for="serviceAmount">Service Amount <span class="error">*</span></label>
@@ -45,6 +45,27 @@
                                                     :class="{'error-border': errors[0]}"
                                                     id="serviceAmount"
                                                     v-model="ServiceAmount"
+                                                    name="service-amount"
+                                                    placeholder="0.00"
+                                                    autocomplete="off"
+                                                >
+                                                <span class="error-message">{{ errors[0] }}</span>
+                                            </div>
+                                        </ValidationProvider>
+                                    </div>
+                                    <!-- Service Claim Amount -->
+                                    <div class="col-12 col-md-3">
+                                        <ValidationProvider name="Service Claim Amount" mode="eager" rules="required|numeric|min_value:0" v-slot="{ errors }">
+                                            <div class="form-group">
+                                                <label for="serviceAmount">Service Claim Amount <span class="error">*</span></label>
+                                                <input
+                                                    type="number"
+                                                    step="0.01"
+                                                    min="0"
+                                                    class="form-control"
+                                                    :class="{'error-border': errors[0]}"
+                                                    id="serviceAmount"
+                                                    v-model="ServiceClaimAmount"
                                                     name="service-amount"
                                                     placeholder="0.00"
                                                     autocomplete="off"
@@ -98,7 +119,8 @@ export default {
         return {
             title: '',
             ServiceName: '',
-            ServiceAmount: '',
+            ServiceAmount: 0,
+            ServiceClaimAmount: 0,
             ServiceDetails: '',
             buttonText: '',
             actionType: '',
@@ -121,7 +143,8 @@ export default {
                     instance.title = 'Update Service';
                     instance.buttonText = "Update";
                     instance.ServiceName = service.ServiceName;
-                    instance.ServiceAmount = service.ServiceAmount;
+                    instance.ServiceAmount = parseInt(service.ServiceAmount) ;
+                    instance.ServiceClaimAmount = parseInt(service.ServiceClaimAmount);
                     instance.ServiceDetails = service.ServiceDetails || '';
                     instance.selectedService = service;
 
@@ -167,6 +190,7 @@ export default {
             const data = {
                 ServiceName: this.ServiceName,
                 ServiceAmount: parseFloat(this.ServiceAmount) || 0,
+                ServiceClaimAmount: parseFloat(this.ServiceClaimAmount) || 0,
                 ServiceDetails: this.ServiceDetails || ''
             };
 

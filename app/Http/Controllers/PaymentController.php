@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Sales;
+use App\Models\Settings\Banks;
 use App\Models\User;
 use Carbon\Carbon;
 use Exception;
@@ -59,6 +60,24 @@ class PaymentController extends Controller
         }
     }
 
+    public function getSupportingData()
+    {
+        try {
+            // Fetch all Banks
+            $banks = Banks::all();
+
+            return response()->json([
+                'status' => 'success',
+                'data' => $banks
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error fetching supporting data: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function store(Request $request)
     {
         try {
@@ -89,6 +108,7 @@ class PaymentController extends Controller
                 'PaymentType' => $request->PaymentType,
                 'PaymentDate' => $request->PaymentDate,
                 'Amount' => $request->Amount,
+                'AgentCommission' => $request->AgentCommission,
                 'Status' => 1,
                 'CreatedAt' => now(),
                 'UpdatedAt' => now()
@@ -178,6 +198,7 @@ class PaymentController extends Controller
                     'PaymentType' => $request->PaymentType,
                     'PaymentDate' => $request->PaymentDate,
                     'Amount' => $request->Amount,
+                    'AgentCommission' => $request->AgentCommission,
                     'UpdatedAt' => now()
                 ]);
 

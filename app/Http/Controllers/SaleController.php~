@@ -21,9 +21,6 @@ use Illuminate\Support\Facades\Validator;
 class SaleController extends Controller
 {
     use CodeGeneration;
-    /**
-     * Fetch supporting data for sale form (partners, packages, and agents)
-     */
     public function getSupportingData()
     {
         try {
@@ -48,11 +45,9 @@ class SaleController extends Controller
         }
     }
 
-    /**
-     * Display a listing of the sales.
-     */
     public function index(Request $request)
     {
+        $roleId = Auth::user()->RoleID;
         try {
             $query = Sales::select([
                     'sales.SaleID',
@@ -79,6 +74,11 @@ class SaleController extends Controller
                         ->orWhere('MobileNumber', 'like', "%{$search}%");
                 });
             }
+            if($roleId ==='Agent'){
+                $findAgentId = Agents::where('AgentCode', Auth::user()->UserID)->first();
+                $query->where('sales.AgentID', $findAgentId->AgentID);
+            }
+
 
             $sales = $query->get();
 
@@ -94,9 +94,6 @@ class SaleController extends Controller
         }
     }
 
-    /**
-     * Store a newly created sale with payment data and agent
-     */
     public function store(Request $request)
     {
         DB::beginTransaction();
@@ -255,6 +252,7 @@ class SaleController extends Controller
             ], 500);
         }
     }
+
     public function show($id)
     {
         $sales = Sales::find($id);
@@ -272,11 +270,6 @@ class SaleController extends Controller
         ]);
     }
 
-    /**
-     * Delete the specified sale and its payment.
-     *
-     *
-     */
     public function destroy($id)
     {
         try {
@@ -300,10 +293,6 @@ class SaleController extends Controller
             ], 500);
         }
     }
-
-    /**
-     * Update the specified sale with payment data and agent
-     */
     public function update(Request $request)
     {
         try {

@@ -92,7 +92,7 @@
                                     <div class="col-12 col-md-6">
                                         <ValidationProvider name="Agent NID" mode="eager" rules="" v-slot="{ errors }">
                                             <div class="form-group">
-                                                <label for="agentNID">Agent NID</label>
+                                                <label for="agentNID">Agent NID <span class="error">*</span></label>
                                                 <input
                                                     type="text"
                                                     class="form-control"
@@ -100,7 +100,7 @@
                                                     id="agentNID"
                                                     v-model="AgentNID"
                                                     name="agent-nid"
-                                                    placeholder="National ID"
+                                                    placeholder="National ID No"
                                                     autocomplete="off"
                                                 >
                                                 <span class="error-message">{{ errors[0] }}</span>
