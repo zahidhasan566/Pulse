@@ -31,7 +31,7 @@ class PaymentController extends Controller
                 'Partners.PartnerName',
                 'Agents.AgentName',
                 'Payments.Amount as CustomerPaidAmount',
-                'Payments.AgentCommission as AgentCommission',
+                'Payments.Amount as CustomerPaidAmount',
                 'sales.CreatedAt'
             ])
                 ->join('PackageMaster', 'sales.PackageID', '=', 'PackageMaster.PackageID')

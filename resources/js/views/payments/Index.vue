@@ -45,7 +45,7 @@ export default {
             tableOptions: {
                 source: 'payments/list',  // Adjust to your API for sales
                 search: true,
-                slots: [8,9], // Columns for Action and other data
+                slots: [10,11], // Columns for Action and other data
                 hideColumn: ['PaymentID','ProfilePicture'],
                 slotsName: ['image','action'],
                 sortable: [1, 2], // Enable sorting for some columns like Date, Amount

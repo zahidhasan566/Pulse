@@ -21,7 +21,7 @@
             </template>
             <template slot="action" slot-scope="row">
                 <button
-                    :class="row.item.PaymentID ? 'btn btn-warning' : 'btn btn-success'"
+                    :class="row.item.PaymentID ? 'btn btn-info' : 'btn btn-success'"
                     @click="addModal(row.item)">
                     {{ row.item.PaymentID ? 'Update' : 'Add' }} Payment
                 </button>

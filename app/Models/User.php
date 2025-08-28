@@ -52,7 +52,7 @@ class User extends Authenticatable implements JWTSubject
     }
     public function roles()
     {
-        return $this->hasOne(Role::class,'RoleID','RoleID');
+        return $this->hasOne(Role::class,'RoleId','RoleID');
     }
     public function userSubmenu()
     {

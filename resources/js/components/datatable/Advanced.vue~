@@ -90,7 +90,11 @@
                 <template v-if="dataSets.length > 0">
                   <tr v-for="(data,dataIndex) in dataSets" :key="dataIndex">
                     <td v-for="(column,columnIndex) in columns" :key="columnIndex"
-                        :class="{'text-center':options.textCenter && options.textCenter.includes(columnIndex),'text-right':options.textRight && options.textRight.includes(columnIndex)}">
+                        :class="{
+          'text-center': options.textCenter && options.textCenter.includes(columnIndex),
+          'text-right': (options.textRight && options.textRight.includes(columnIndex)) || isNumeric(data[column])
+        }"
+                    >
                       <span v-if="options.slots && options.slots.includes(columnIndex)">
                         <slot :name="options.slotsName[options.slots.indexOf(columnIndex)]" :item="data"></slot>
                       </span>
@@ -161,7 +165,7 @@ import moment from "moment";
 
 export default {
   components: {DatePicker},
-  props: ['options','advance','business','department','paymentModes','banks','action'],
+  props: ['options','advance','business','department','paymentModes','Banks','action'],
   mixins: [Common],
   data() {
     return {

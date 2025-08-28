@@ -106,6 +106,7 @@ class AdminUserController extends Controller
     //Get Existing User Info
     public function getUserInfo($UserID){
         $user = User::where('UserID', $UserID)->with(['roles', 'userSubmenu'])->first();
+        dd($user);
         $allSubMenus = Menu::whereNotIn('MenuID', ['Dashboard', 'Users'])->with('allSubMenus')->orderBy('MenuOrder', 'asc')->get();
         return response()->json([
             'status' => 'success',
