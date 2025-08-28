@@ -24,37 +24,36 @@
             </div>
         </div>
 
-        <div class="row">
+        <div class="row" v-if="me.RoleID=='admin' || me.RoleID =='Agent'">
             <div class="col-xl-3 col-md-4">
                 <div class="card mini-stat bg-primary text-white">
                     <div class="card-body">
                         <div class="mb-4">
-                            <div class="float-left mini-stat-img mr-4"><img src="assets/images/services-icon/01.png" alt="" /></div>
-                            <h5 class="font-16 text-uppercase mt-0 text-white-50">Sales </h5>
+                            <div class="float-left mini-stat-img mr-4">
+                                <img src="assets/images/services-icon/01.png" alt="" />
+                            </div>
+                            <h5 class="font-16 text-uppercase mt-0 text-white-50">Sales</h5>
                             <table class="table table-striped">
                                 <thead>
                                 <tr>
                                     <th>Total Customer</th>
-                                    <th>Total Sales (Amount)</th>
-                                    <th>Agent Commission (Amount)</th>
+                                    <th>Total Sales (Amount-BDT)</th>
+                                    <th>Agent Commission (Amount-BDT)</th>
                                 </tr>
                                 </thead>
                                 <tbody id="tagModal-body">
                                 <tr>
                                     <td>{{ total_sales }}</td>
-                                    <td>{{ total_amount_paid }}</td>
-                                    <td>{{total_agent_commission }}</td>
+                                    <td>{{ (total_amount_paid) }}</td>
+                                    <td>{{ (total_agent_commission) }}</td>
                                 </tr>
                                 </tbody>
                             </table>
                         </div>
 
-                        <!-- Graph -->
-
-
                         <div class="pt-2">
                             <div class="float-right">
-                                <router-link :to="{ path: 'purchase/purchaseList' }">
+                                <router-link :to="{ path: 'sales' }">
                                     <i style="color: white" class="mdi mdi-arrow-right h5"></i>
                                 </router-link>
                             </div>
@@ -64,14 +63,41 @@
             </div>
 
             <div class="col-md-6">
-                <div v-if="!isLoading">
-                    <canvas id="salesChart"></canvas>
-                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <h5 class="card-title">Sales Overview Chart</h5>
+                        <div v-if="!isLoading" class="chart-container">
+                            <canvas id="salesChart" width="400" height="200"></canvas>
+                        </div>
 
-                <!-- Loading Spinner -->
-                <div v-else>
-                    <p>Loading...</p> <!-- Display loading text while fetching data -->
+                        <!-- Loading Spinner -->
+                        <div v-else class="text-center p-4">
+                            <div class="spinner-border" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                            <p class="mt-2">Loading chart data...</p>
+                        </div>
+
+                        <!-- Error State -->
+                        <div v-if="chartError" class="alert alert-danger">
+                            <strong>Chart Error:</strong> {{ chartError }}
+                            <button @click="retryChart" class="btn btn-sm btn-outline-danger ml-2">
+                                Retry
+                            </button>
+                        </div>
+                    </div>
                 </div>
+            </div>
+        </div>
+
+
+        <div class="row" v-if="me.RoleID ==='Customer'">
+            <div class="col-xl-12 col-md-12">
+                <marquee behavior="alternate">
+             <span class="marquee">
+            <h4 style="color: rgb(0 203 176); text-shadow: #ffffff 0px 4px 10px;">Welcome to the Pulse Panel, {{me.Name}} !</h4>
+        </span>
+                </marquee>
             </div>
         </div>
     </div>
@@ -79,18 +105,39 @@
 
 <script>
 import { Common } from "../../mixins/common";
-import { Chart } from 'chart.js';
+import {
+    Chart,
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    BarController,
+    Title,
+    Tooltip,
+    Legend
+} from 'chart.js';
 
+// Register Chart.js components - including BarController for bar charts
+Chart.register(
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    BarController,
+    Title,
+    Tooltip,
+    Legend
+);
 
 export default {
     mixins: [Common],
     data() {
         return {
             isLoading: true,
+            chartError: null,
             sales: [],
             total_agent_commission: 0,
             total_amount_paid: 0,
             total_sales: 0,
+            chartInstance: null, // Store chart instance
         };
     },
     computed: {
@@ -98,75 +145,179 @@ export default {
             return this.$store.state.me;
         },
     },
-    created() {
-        this.getData();
+    watch: {
+        'me': function (newMe) {
+            console.log('Updated User Data:', newMe);  // Log the updated data
+            if (newMe && (newMe.RoleID === 'admin' || newMe.RoleID === 'Agent')) {
+                this.getData();
+            }
+        },
+    },
+    beforeDestroy() {
+        // Clean up chart instance when component is destroyed
+        if (this.chartInstance) {
+            this.chartInstance.destroy();
+            this.chartInstance = null;
+        }
     },
     methods: {
         getData() {
+            this.isLoading = true;
+            this.chartError = null;
+
             this.axiosGet("dashboard-data", (response) => {
-                console.log(response)
-                this.total_agent_commission = response.total_agent_commission;
-                this.total_amount_paid = response.total_amount_paid;
-                this.total_sales = response.total_sales;
+                console.log("Dashboard data received:", response);
+
+                this.total_agent_commission = response.total_agent_commission || 0;
+                this.total_amount_paid = response.total_amount_paid || 0;
+                this.total_sales = response.total_sales || 0;
+
                 this.isLoading = false;
-                this.renderChart();
+
+                // Use nextTick to ensure DOM is updated before rendering chart
+                this.$nextTick(() => {
+                    this.renderChart();
+                });
             }, (error) => {
                 this.isLoading = false;
+                this.chartError = "Failed to load dashboard data";
                 this.errorNoti(error);
             });
         },
 
         renderChart() {
-            const ctx = document.getElementById("salesChart").getContext("2d");
+            try {
+                // Wait for DOM element to be available
+                const canvas = document.getElementById("salesChart");
+                if (!canvas) {
+                    console.error("Canvas element 'salesChart' not found!");
+                    this.chartError = "Chart canvas not found";
+                    return;
+                }
 
-            // These are the three values you want to chart
-            const totalSales = parseFloat(this.total_sales).toFixed(4);
-            const totalAmountPaid = parseFloat(this.total_amount_paid).toFixed(4);
-            const totalAgentCommission = parseFloat(this.total_agent_commission).toFixed(4);
+                // Destroy existing chart if it exists
+                if (this.chartInstance) {
+                    this.chartInstance.destroy();
+                    this.chartInstance = null;
+                }
 
-            console.log(totalSales)
+                const ctx = canvas.getContext("2d");
 
-            // Create the chart
-            new Chart(ctx, {
-                type: "bar", // Bar chart type
-                data: {
-                    labels: ['Sales Overview'],  // Label for the chart (can be any label you want)
-                    datasets: [
-                        {
-                            label: "Total Sales",
-                            data: [totalSales],
-                            backgroundColor: "rgba(54, 162, 235, 0.5)",
-                            borderColor: "rgba(54, 162, 235, 1)",
-                            borderWidth: 1,
-                        },
-                        {
-                            label: "Total Amount Paid",
-                            data: [totalAmountPaid],
-                            backgroundColor: "rgba(75, 192, 192, 0.5)",
-                            borderColor: "rgba(75, 192, 192, 1)",
-                            borderWidth: 1,
-                        },
-                        {
-                            label: "Total Agent Commission",
-                            data: [totalAgentCommission],
-                            backgroundColor: "rgba(255, 99, 132, 0.5)",
-                            borderColor: "rgba(255, 99, 132, 1)",
-                            borderWidth: 1,
-                        },
-                    ],
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                stepSize: 10000, // Adjust this step size as per your data
+                // Convert and validate data
+                const totalSales = this.parseNumber(this.total_sales);
+                const totalAmountPaid = this.parseNumber(this.total_amount_paid);
+                const totalAgentCommission = this.parseNumber(this.total_agent_commission);
+
+                console.log("Chart data:", {
+                    totalSales,
+                    totalAmountPaid,
+                    totalAgentCommission
+                });
+
+                // Calculate dynamic step size based on the largest value
+                const maxValue = Math.max(totalSales, totalAmountPaid, totalAgentCommission);
+                const stepSize = maxValue > 1000 ? Math.ceil(maxValue / 10) : 100;
+
+                // Create the chart
+                this.chartInstance = new Chart(ctx, {
+                    type: "bar",
+                    data: {
+                        labels: ['Sales Overview'],
+                        datasets: [
+                            {
+                                label: "Total Customers",
+                                data: [totalSales],
+                                backgroundColor: "rgba(54, 162, 235, 0.6)",
+                                borderColor: "rgba(54, 162, 235, 1)",
+                                borderWidth: 2,
+                            },
+                            {
+                                label: "Total Amount Paid",
+                                data: [totalAmountPaid],
+                                backgroundColor: "rgba(75, 192, 192, 0.6)",
+                                borderColor: "rgba(75, 192, 192, 1)",
+                                borderWidth: 2,
+                            },
+                            {
+                                label: "Agent Commission",
+                                data: [totalAgentCommission],
+                                backgroundColor: "rgba(255, 99, 132, 0.6)",
+                                borderColor: "rgba(255, 99, 132, 1)",
+                                borderWidth: 2,
+                            },
+                        ],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Sales Dashboard Overview'
+                            },
+                            legend: {
+                                display: true,
+                                position: 'top'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: (context) => {
+                                        const label = context.dataset.label || '';
+                                        const value = context.parsed.y;
+                                        if (label.includes('Amount') || label.includes('Commission')) {
+                                            return `${label}: ${this.formatCurrency(value)}`;
+                                        }
+                                        return `${label}: ${value}`;
+                                    }
+                                }
                             }
                         },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    stepSize: stepSize,
+                                    callback: function(value) {
+                                        // Format y-axis labels as currency for larger values
+                                        if (value >= 1000) {
+                                            return  (value / 1000).toFixed(1) + 'K';
+                                        }
+                                        return  value;
+                                    }
+                                }
+                            },
+                        },
                     },
-                },
+                });
+
+                console.log("Chart rendered successfully!");
+                this.chartError = null;
+
+            } catch (error) {
+                console.error("Error rendering chart:", error);
+                this.chartError = `Chart rendering failed: ${error.message}`;
+            }
+        },
+
+        retryChart() {
+            this.chartError = null;
+            this.$nextTick(() => {
+                this.renderChart();
             });
+        },
+
+        parseNumber(value) {
+            const parsed = parseFloat(value);
+            return isNaN(parsed) ? 0 : parsed;
+        },
+
+        formatCurrency(value) {
+            const num = this.parseNumber(value);
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2
+            }).format(num);
         }
     },
 };
@@ -178,12 +329,15 @@ export default {
     text-align: center;
     text-transform: uppercase;
 }
+
 .card-body {
     padding: 0.60rem !important;
 }
+
 .bg-blue span {
     font-size: 18px;
 }
+
 .task {
     background: #00a55d2b;
     padding: 5px 8px;
@@ -192,15 +346,18 @@ export default {
     border-radius: 5px;
     font-weight: bold;
 }
+
 .links {
     /*height: 148px;*/
 }
+
 .helpline {
     height: 120px;
     text-align: center;
     position: relative;
     background-image: linear-gradient(146deg,#626ed4,#626ed4);
 }
+
 .helpline span {
     position: absolute;
     top: 40%;
@@ -211,22 +368,36 @@ export default {
     text-transform: uppercase;
     color: #FFFFFF;
 }
+
 .contact {
     height: 120px;
     text-align: center;
     padding-top: 20px;
     background-image: linear-gradient(146deg,#626ed4,#626ed4);
 }
+
 .contact p {
     margin: 0;
     padding: 2px;
     font-weight: bold;
     color: #ffffff;
 }
+
 .header-bg {
     text-align: center;
     font-size: 16px;
     font-weight: bold;
     text-transform: uppercase;
+}
+
+.chart-container {
+    position: relative;
+    height: 300px;
+    width: 100%;
+}
+
+.spinner-border {
+    width: 3rem;
+    height: 3rem;
 }
 </style>
